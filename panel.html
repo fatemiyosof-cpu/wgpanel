@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<title>WireGuard Gaming Panel</title>
+<style>
+:root{
+  --bg:#070a12;--bg-2:#0b1020;--surface:rgba(20,26,44,.72);--surface-2:rgba(28,35,58,.55);
+  --surface-solid:#121829;--border:rgba(120,140,200,.14);--border-strong:rgba(120,140,200,.28);
+  --text:#e9edf9;--text-dim:#98a3c2;--text-mute:#66719a;--accent:#00e5ff;--accent-2:#7c5cff;
+  --accent-3:#31ff8f;--danger:#ff4d6d;--warn:#ffb020;--shadow:0 18px 60px rgba(0,0,0,.55);
+  --radius:18px;--radius-sm:12px;--grid-line:rgba(120,140,200,.08);
+}
+html[data-theme="light"]{
+  --bg:#eef1f8;--bg-2:#e4e9f5;--surface:rgba(255,255,255,.85);--surface-2:rgba(255,255,255,.65);
+  --surface-solid:#fff;--border:rgba(30,45,90,.12);--border-strong:rgba(30,45,90,.22);
+  --text:#0d1526;--text-dim:#4a5678;--text-mute:#7783a6;--accent:#0084a8;--accent-2:#5b3ce0;
+  --accent-3:#0aa85e;--danger:#d92b4d;--warn:#b87300;--shadow:0 18px 50px rgba(30,45,90,.16);
+  --grid-line:rgba(30,45,90,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;transition:background .5s,color .35s}
+body::before{content:"";position:fixed;inset:0;z-index:-2;
+  background:radial-gradient(900px 600px at 12% -10%,rgba(0,229,255,.16),transparent 60%),
+    radial-gradient(900px 700px at 105% 5%,rgba(124,92,255,.18),transparent 60%),
+    radial-gradient(800px 700px at 50% 115%,rgba(49,255,143,.10),transparent 60%),
+    linear-gradient(180deg,var(--bg-2),var(--bg) 60%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;
+  background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 85%);
+  -webkit-mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 85%);
+  pointer-events:none}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1220px;margin:0 auto;padding:22px 18px 70px}
+@media(min-width:768px){.wrap{padding:34px 30px 90px}}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:26px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.logo{width:52px;height:52px;flex:0 0 52px;border-radius:15px;display:grid;place-items:center;
+  background:linear-gradient(145deg,rgba(0,229,255,.20),rgba(124,92,255,.22));
+  border:1px solid var(--border-strong);position:relative}
+.logo svg{width:28px;height:28px;color:var(--accent)}
+.brand h1{margin:0;font-size:clamp(19px,3.6vw,26px);letter-spacing:.14em;font-weight:800;line-height:1.05;text-transform:uppercase}
+.brand h1 span{display:block;font-size:.62em;letter-spacing:.34em;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.brand p{margin:5px 0 0;font-size:11.5px;color:var(--text-dim);letter-spacing:.06em}
+.top-right{display:flex;align-items:center;gap:10px}
+.pill-status{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);font-size:11px;letter-spacing:.1em;
+  font-weight:600;color:var(--text-dim);text-transform:uppercase}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent-3);
+  box-shadow:0 0 10px var(--accent-3);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.85)}}
+.theme-toggle{width:46px;height:46px;border-radius:14px;border:1px solid var(--border);
+  background:var(--surface);cursor:pointer;display:grid;place-items:center;transition:transform .18s,border-color .18s}
+.theme-toggle:hover{transform:translateY(-2px);border-color:var(--border-strong)}
+.theme-toggle svg{width:20px;height:20px;color:var(--text)}
+html[data-theme="dark"] .icon-sun{display:none}
+html[data-theme="light"] .icon-moon{display:none}
+.layout{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:1024px){.layout{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);align-items:start}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px;position:relative;overflow:hidden;
+  transition:border-color .3s,background .5s;animation:rise .55s cubic-bezier(.2,.8,.25,1) both}
+@media(min-width:768px){.card{padding:28px}}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,.45),rgba(124,92,255,.45),transparent);opacity:.7}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.card-head .idx{width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;
+  font-size:12.5px;font-weight:800;background:linear-gradient(145deg,rgba(0,229,255,.18),rgba(124,92,255,.18));
+  border:1px solid var(--border-strong);color:var(--accent)}
+.card-head h2{margin:0;font-size:13px;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+.card-head .hint{margin-left:auto;font-size:10.5px;color:var(--text-mute);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.step{margin-bottom:26px}
+.step:last-child{margin-bottom:0}
+.step-label{display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px}
+.step-label .num{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;
+  font-size:10.5px;font-weight:800;background:rgba(0,229,255,.12);color:var(--accent);border:1px solid rgba(0,229,255,.25)}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:9px}
+.chip{appearance:none;border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);
+  border-radius:var(--radius-sm);padding:13px 8px;font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .18s;text-align:center;min-height:46px;display:grid;place-items:center}
+.chip:hover{border-color:var(--border-strong);color:var(--text);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:linear-gradient(145deg,rgba(0,229,255,.18),rgba(124,92,255,.16));
+  border-color:rgba(0,229,255,.5);color:var(--text);
+  box-shadow:0 0 0 1px rgba(0,229,255,.15),0 8px 24px rgba(0,229,255,.12)}
+.chip small{display:block;font-size:9.5px;font-weight:600;letter-spacing:.08em;color:var(--text-mute);margin-top:2px;text-transform:uppercase}
+.chip[aria-pressed="true"] small{color:var(--accent)}
+.input-row{display:flex;gap:10px;margin-top:12px}
+input[type="number"]{width:100%;padding:13px 15px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--surface-2);color:var(--text);font-size:15px;font-weight:600;min-height:46px}
+input::placeholder{color:var(--text-mute);font-weight:500}
+input:focus{border-color:rgba(0,229,255,.5);box-shadow:0 0 0 3px rgba(0,229,255,.10);outline:none}
+.unit{display:grid;place-items:center;padding:0 16px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--surface-2);font-size:12px;font-weight:700;
+  letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;white-space:nowrap}
+.location-select{width:100%;padding:14px 42px 14px 15px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:15px;
+  font-weight:600;appearance:none;-webkit-appearance:none;cursor:pointer;min-height:50px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2398a3c2' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center}
+.location-select:focus{border-color:rgba(0,229,255,.5);box-shadow:0 0 0 3px rgba(0,229,255,.10);outline:none}
+.location-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{font-size:10.5px;padding:6px 11px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--text-dim);letter-spacing:.06em;font-weight:600;text-transform:uppercase}
+.tag b{color:var(--accent);font-weight:800}
+.btn-primary{width:100%;margin-top:8px;padding:19px 22px;border:none;border-radius:var(--radius-sm);
+  cursor:pointer;font-size:14px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:#031018;background:linear-gradient(120deg,var(--accent),#6fd8ff 40%,var(--accent-2));
+  background-size:180% 180%;box-shadow:0 12px 34px rgba(0,229,255,.22),inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform .18s,box-shadow .3s,background-position .6s;display:flex;align-items:center;
+  justify-content:center;gap:10px;min-height:58px}
+.btn-primary:hover{transform:translateY(-2px);background-position:100% 50%;
+  box-shadow:0 18px 44px rgba(0,229,255,.3),inset 0 1px 0 rgba(255,255,255,.4)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn-primary svg{width:18px;height:18px}
+.btn-secondary{padding:13px 16px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);
+  background:var(--surface-2);color:var(--text);cursor:pointer;font-size:12px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;transition:all .18s;display:inline-flex;
+  align-items:center;justify-content:center;gap:8px;min-height:46px}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+.btn-secondary svg{width:15px;height:15px}
+.result-empty{text-align:center;padding:40px 18px;color:var(--text-mute);font-size:12.5px;line-height:1.7}
+.result-empty svg{width:52px;height:52px;color:var(--text-mute);opacity:.4;margin-bottom:14px}
+.result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;
+  border-radius:14px;background:linear-gradient(135deg,rgba(49,255,143,.12),rgba(0,229,255,.06));
+  border:1px solid rgba(49,255,143,.28);margin-bottom:18px}
+.result-head .label{font-size:10.5px;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;font-weight:700}
+.result-head .val{font-size:16px;font-weight:800;letter-spacing:.14em;color:var(--accent-3);display:flex;align-items:center;gap:8px}
+.result-head .val::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-3);box-shadow:0 0 10px var(--accent-3)}
+.kv-grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--border);border-radius:14px;
+  overflow:hidden;border:1px solid var(--border);margin-bottom:18px}
+@media(min-width:600px){.kv-grid{grid-template-columns:1fr 1fr}}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:13px 16px;background:rgba(15,20,35,.7);align-items:center}
+html[data-theme="light"] .kv{background:var(--surface-solid)}
+.kv .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-mute);font-weight:700}
+.kv .v{font-size:13px;font-weight:700;text-align:right;word-break:break-word}
+.kv .v.mono{font-family:ui-monospace,monospace;font-size:12px;color:var(--accent)}
+.bars{margin-bottom:18px}
+.bar-row{margin-bottom:13px}
+.bar-row .bar-top{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:7px;font-weight:600}
+.bar-track{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border)}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .8s;width:0}
+.bar-fill.green{background:linear-gradient(90deg,var(--accent-3),#00e5ff)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions .full{grid-column:1/-1}
+.loader{margin-top:16px;padding:18px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);display:none}
+.loader.active{display:block;animation:rise .35s both}
+.loader-title{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,229,255,.25);
+  border-top-color:var(--accent);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-steps{list-style:none;margin:0;padding:0;font-size:12px}
+.loader-steps li{display:flex;align-items:center;gap:10px;padding:7px 0;color:var(--text-mute);transition:color .3s}
+.loader-steps li.done{color:var(--accent-3)}
+.loader-steps li.active{color:var(--text)}
+.loader-steps li .bullet{width:16px;height:16px;flex:0 0 16px;border-radius:50%;
+  border:1.5px solid var(--border-strong);display:grid;place-items:center;font-size:9px;font-weight:800;transition:all .3s}
+.loader-steps li.done .bullet{background:var(--accent-3);border-color:var(--accent-3);color:#031018}
+.loader-steps li.active .bullet{border-color:var(--accent);animation:pulse 1.4s infinite}
+.config-box{display:none;margin-top:16px;border-radius:14px;border:1px solid var(--border);
+  background:rgba(5,8,16,.85);overflow:hidden}
+.config-box.active{display:block;animation:rise .3s both}
+.config-box .cb-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;
+  border-bottom:1px solid var(--border);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:#98a3c2;font-weight:700}
+.config-box pre{margin:0;padding:16px;font-family:ui-monospace,monospace;font-size:11.5px;
+  line-height:1.75;color:#d4f5ff;white-space:pre;overflow-x:auto;max-height:340px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120%);padding:13px 20px;
+  border-radius:12px;background:linear-gradient(135deg,rgba(0,229,255,.95),rgba(124,92,255,.95));
+  color:#031018;font-size:12.5px;font-weight:800;letter-spacing:.08em;box-shadow:0 16px 40px rgba(0,0,0,.4);
+  z-index:9999;transition:transform .4s cubic-bezier(.2,.8,.25,1);max-width:calc(100vw - 32px);text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{background:linear-gradient(135deg,var(--danger),#ff8fa3);color:#fff}
+.notice{margin-top:14px;padding:12px 15px;border-radius:12px;background:rgba(255,176,32,.08);
+  border:1px solid rgba(255,176,32,.3);font-size:11.5px;line-height:1.6;color:var(--text-dim)}
+.notice b{color:var(--warn)}
+.dns-result{display:none;margin-top:16px;padding:16px;border-radius:14px;border:1px solid rgba(124,92,255,.35);
+  background:linear-gradient(135deg,rgba(124,92,255,.10),rgba(0,229,255,.05))}
+.dns-result.active{display:block;animation:rise .35s both}
+.dns-result .dns-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;
+  border-bottom:1px dashed var(--border);align-items:center}
+.dns-result .dns-row:last-child{border-bottom:none}
+.dns-result .dns-row .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-mute);font-weight:700}
+.dns-result .dns-row .v{font-size:12.5px;font-weight:700;font-family:ui-monospace,monospace;color:var(--accent);text-align:right;word-break:break-all}
+.ep-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px}
+.ep-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;
+  border:1px solid var(--border);background:var(--surface-2);font-size:11.5px}
+.ep-dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.ep-dot.online{background:var(--accent-3);box-shadow:0 0 8px var(--accent-3)}
+.ep-dot.degraded{background:var(--warn)}
+.ep-dot.offline{background:var(--danger)}
+.ep-dot.unverified{background:var(--text-mute)}
+.ep-info{flex:1;min-width:0}
+.ep-host{font-weight:700;font-family:ui-monospace,monospace;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ep-meta{font-size:10px;color:var(--text-mute);margin-top:2px}
+.ep-score{font-size:11px;font-weight:800;color:var(--accent);font-family:ui-monospace,monospace}
+.ep-toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.ep-toolbar .btn-secondary{flex:1;min-width:130px;font-size:11px}
+footer{margin-top:40px;text-align:center;font-size:11px;color:var(--text-mute);letter-spacing:.08em;line-height:1.9}
+footer b{color:var(--text-dim)}
+@media(max-width:480px){
+  .wrap{padding:16px 13px 60px}
+  .card{padding:18px 15px}
+  .pill-status{display:none}
+  .actions{grid-template-columns:1fr}
+  .chips{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div>
+        <h1>WireGuard <span>Gaming</span></h1>
+        <p>Gaming Network Configuration Panel</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="pill-status"><span class="dot"></span><span id="engineStatus">Engine Ready</span></div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="col-left">
+      <section class="card">
+        <div class="card-head"><div class="idx">01</div><h2>Create Gaming Server</h2><span class="hint">3 Steps</span></div>
+
+        <div class="step">
+          <div class="step-label"><span class="num">1</span> Data Volume</div>
+          <div class="chips" id="dataChips">
+            <button class="chip" data-value="10" aria-pressed="false">10<small>GB</small></button>
+            <button class="chip" data-value="25" aria-pressed="false">25<small>GB</small></button>
+            <button class="chip" data-value="50" aria-pressed="true">50<small>GB</small></button>
+            <button class="chip" data-value="100" aria-pressed="false">100<small>GB</small></button>
+            <button class="chip" data-value="250" aria-pressed="false">250<small>GB</small></button>
+            <button class="chip" data-value="500" aria-pressed="false">500<small>GB</small></button>
+            <button class="chip" data-value="1024" aria-pressed="false">1<small>TB</small></button>
+            <button class="chip" data-value="0" aria-pressed="false">∞<small>Unlimited</small></button>
+          </div>
+          <div class="input-row"><input type="number" id="customData" min="1" placeholder="Custom volume (GB)"><span class="unit">GB</span></div>
+        </div>
+
+        <div class="step">
+          <div class="step-label"><span class="num">2</span> Duration</div>
+          <div class="chips" id="durationChips">
+            <button class="chip" data-days="1" aria-pressed="false">1<small>Day</small></button>
+            <button class="chip" data-days="7" aria-pressed="false">7<small>Days</small></button>
+            <button class="chip" data-days="30" aria-pressed="true">30<small>Days</small></button>
+            <button class="chip" data-days="60" aria-pressed="false">60<small>Days</small></button>
+            <button class="chip" data-days="90" aria-pressed="false">90<small>Days</small></button>
+            <button class="chip" data-days="180" aria-pressed="false">180<small>Days</small></button>
+            <button class="chip" data-days="365" aria-pressed="false">365<small>Days</small></button>
+          </div>
+          <div class="input-row"><input type="number" id="customDuration" min="1" placeholder="Custom duration (days)"><span class="unit">Days</span></div>
+        </div>
+
+        <div class="step">
+          <div class="step-label"><span class="num">3</span> Gaming Location</div>
+          <select class="location-select" id="locationSelect"></select>
+          <div class="location-meta">
+            <span class="tag">DNS <b id="tagDns">Auto</b></span>
+            <span class="tag">Endpoints <b id="tagEps">—</b></span>
+            <span class="tag">Routes <b>Gaming-only</b></span>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="createBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Create Gaming Server
+        </button>
+
+        <div class="loader" id="loader"><div class="loader-title"><span class="spinner"></span> Generating Gaming Configuration…</div><ul class="loader-steps" id="loaderSteps"></ul></div>
+
+        <div class="notice"><b>Gaming-only routing:</b> This panel never generates <code>0.0.0.0/0</code> or <code>::/0</code>. Only explicitly configured gaming CIDR ranges are routed through the tunnel.</div>
+      </section>
+
+      <section class="card" style="margin-top:20px">
+        <div class="card-head"><div class="idx">02</div><h2>Gaming DNS Mode</h2><span class="hint">Location-based</span></div>
+        <div class="step">
+          <div class="step-label"><span class="num">1</span> Data Volume</div>
+          <div class="chips" id="dnsDataChips">
+            <button class="chip" data-value="10" aria-pressed="false">10<small>GB</small></button>
+            <button class="chip" data-value="50" aria-pressed="true">50<small>GB</small></button>
+            <button class="chip" data-value="100" aria-pressed="false">100<small>GB</small></button>
+            <button class="chip" data-value="0" aria-pressed="false">∞<small>Unlimited</small></button>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-label"><span class="num">2</span> Duration</div>
+          <div class="chips" id="dnsDurationChips">
+            <button class="chip" data-days="7" aria-pressed="false">7<small>Days</small></button>
+            <button class="chip" data-days="30" aria-pressed="true">30<small>Days</small></button>
+            <button class="chip" data-days="90" aria-pressed="false">90<small>Days</small></button>
+            <button class="chip" data-days="365" aria-pressed="false">365<small>Days</small></button>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-label"><span class="num">3</span> Location</div>
+          <select class="location-select" id="dnsLocationSelect"></select>
+        </div>
+        <button class="btn-primary" id="dnsBtn" type="button" style="background:linear-gradient(120deg,var(--accent-2),#a78bfa 40%,var(--accent))">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></svg>
+          Generate Gaming DNS
+        </button>
+        <div class="dns-result" id="dnsResult"></div>
+      </section>
+    </div>
+
+    <div class="col-right">
+      <section class="card">
+        <div class="card-head"><div class="idx">★</div><h2>Server Configuration</h2><span class="hint" id="resultHint">Awaiting</span></div>
+        <div id="resultEmpty" class="result-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 10h8M8 14h5"/></svg>
+          <div>No active gaming configuration.<br>Complete the 3 steps and press<br><b style="color:var(--accent)">CREATE GAMING SERVER</b></div>
+        </div>
+        <div id="resultContent" style="display:none">
+          <div class="result-head">
+            <div><div class="label">Server Status</div><div class="val">ACTIVE</div></div>
+            <div style="text-align:right"><div class="label">Config ID</div><div class="val" style="color:var(--text);font-family:ui-monospace;font-size:13px" id="cfgId">—</div></div>
+          </div>
+          <div class="kv-grid" id="kvGrid"></div>
+          <div class="bars">
+            <div class="bar-row"><div class="bar-top"><span>Data Remaining</span><span id="dataBarTxt">—</span></div><div class="bar-track"><div class="bar-fill" id="dataBar"></div></div></div>
+            <div class="bar-row"><div class="bar-top"><span>Time Remaining</span><span id="timeBarTxt">—</span></div><div class="bar-track"><div class="bar-fill green" id="timeBar"></div></div></div>
+          </div>
+          <div class="actions">
+            <button class="btn-secondary" id="showConfigBtn" type="button">Show Config</button>
+            <button class="btn-secondary" id="copyBtn" type="button">Copy Config</button>
+            <button class="btn-secondary full" id="downloadBtn" type="button" style="background:linear-gradient(120deg,rgba(49,255,143,.14),rgba(0,229,255,.10));border-color:rgba(49,255,143,.4);color:var(--accent-3)">Download .conf</button>
+          </div>
+          <div class="config-box" id="configBox">
+            <div class="cb-head"><span>wireguard-gaming.conf</span><span id="cfgLines">— lines</span></div>
+            <pre id="configPre"></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:20px">
+        <div class="card-head"><div class="idx">◎</div><h2>Endpoint Pool</h2><span class="hint" id="epCount">0 nodes</span></div>
+        <div class="ep-toolbar">
+          <button class="btn-secondary" id="importBtn" type="button">Import Endpoints</button>
+          <button class="btn-secondary" id="healthBtn" type="button">Re-check Health</button>
+          <button class="btn-secondary" id="loadSampleBtn" type="button">Load Public List</button>
+        </div>
+        <div class="ep-list" id="epList"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <div><b>WIREGUARD GAMING PANEL</b> · Ultimate Edition</div>
+    <div>Client-side generation · Gaming-only routing · Backend-ready architecture</div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   API_BASE_URL — backend endpoint
+   ============================================================ */
+const API_BASE_URL = "";
+
+/* ============================================================
+   STORAGE_ENGINE
+   ============================================================ */
+const STORAGE_ENGINE = (()=>{
+  const PREFIX = "wg-gaming:";
+  const safe = {
+    get(k, fallback){
+      try{ const v = localStorage.getItem(PREFIX+k); return v===null?fallback:JSON.parse(v); }
+      catch(e){ return fallback; }
+    },
+    set(k, v){ try{ localStorage.setItem(PREFIX+k, JSON.stringify(v)); }catch(e){} }
+  };
+  return {
+    getTheme(){ return safe.get("theme","dark"); },
+    setTheme(t){ safe.set("theme", t); },
+    getPrefs(){ return safe.get("prefs",{}); },
+    setPrefs(p){ safe.set("prefs", p); }
+  };
+})();
+
+/* ============================================================
+   THEME_ENGINE
+   ============================================================ */
+const THEME_ENGINE = (()=>{
+  const root = document.documentElement;
+  function apply(t){
+    root.setAttribute("data-theme", t);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute("content", t==="dark" ? "#070a12" : "#eef1f8");
+  }
+  return {
+    init(){ apply(STORAGE_ENGINE.getTheme()); },
+    toggle(){
+      const cur = root.getAttribute("data-theme")==="dark" ? "light" : "dark";
+      apply(cur); STORAGE_ENGINE.setTheme(cur); return cur;
+    }
+  };
+})();
+
+/* ============================================================
+   ROUTE_ENGINE — gaming-only CIDRs (never 0.0.0.0/0)
+   ============================================================ */
+const ROUTE_ENGINE = (()=>{
+  const GAMING_ROUTES = {
+    "call-of-duty":{name:"Call of Duty",ipv4:[],ipv6:[]},
+    "valorant":{name:"Valorant",ipv4:[],ipv6:[]},
+    "counter-strike":{name:"Counter-Strike",ipv4:[],ipv6:[]},
+    "fortnite":{name:"Fortnite",ipv4:[],ipv6:[]},
+    "minecraft":{name:"Minecraft",ipv4:[],ipv6:[]},
+    "steam":{name:"Steam",ipv4:[],ipv6:[]},
+    "epic-games":{name:"Epic Games",ipv4:[],ipv6:[]},
+    "ea-games":{name:"EA Games",ipv4:[],ipv6:[]},
+    "ubisoft":{name:"Ubisoft",ipv4:[],ipv6:[]}
+  };
+  const ADMIN_ROUTES = { ipv4:[], ipv6:[] };
+  function valid(c){
+    return typeof c==="string" && c!=="0.0.0.0/0" && c!=="::/0" && !c.includes("/0");
+  }
+  function buildAllowedIPs(){
+    const all = new Set();
+    Object.values(GAMING_ROUTES).forEach(p=>{
+      p.ipv4.forEach(r=>{ if(valid(r)) all.add(r); });
+      p.ipv6.forEach(r=>{ if(valid(r)) all.add(r); });
+    });
+    ADMIN_ROUTES.ipv4.forEach(r=>{ if(valid(r)) all.add(r); });
+    ADMIN_ROUTES.ipv6.forEach(r=>{ if(valid(r)) all.add(r); });
+    return [...all];
+  }
+  return { GAMING_ROUTES, ADMIN_ROUTES, buildAllowedIPs };
+})();
+
+/* ============================================================
+   DNS_ENGINE — location → DNS profile
+   ============================================================ */
+const DNS_ENGINE = (()=>{
+  const P = {
+    germany:{label:"Germany",ipv4:["9.9.9.9","149.112.112.112"],ipv6:["2620:fe::fe","2620:fe::9"]},
+    turkey:{label:"Turkey",ipv4:["1.1.1.1","1.0.0.1"],ipv6:["2606:4700:4700::1111","2606:4700:4700::1001"]},
+    netherlands:{label:"Netherlands",ipv4:["9.9.9.9","149.112.112.112"],ipv6:["2620:fe::fe","2620:fe::9"]},
+    uk:{label:"United Kingdom",ipv4:["1.1.1.1","1.0.0.1"],ipv6:["2606:4700:4700::1111","2606:4700:4700::1001"]},
+    france:{label:"France",ipv4:["9.9.9.9","149.112.112.112"],ipv6:["2620:fe::fe","2620:fe::9"]},
+    finland:{label:"Finland",ipv4:["1.1.1.1","1.0.0.1"],ipv6:["2606:4700:4700::1111","2606:4700:4700::1001"]},
+    poland:{label:"Poland",ipv4:["9.9.9.9","149.112.112.112"],ipv6:["2620:fe::fe","2620:fe::9"]},
+    sweden:{label:"Sweden",ipv4:["1.1.1.1","1.0.0.1"],ipv6:["2606:4700:4700::1111","2606:4700:4700::1001"]},
+    norway:{label:"Norway",ipv4:["9.9.9.9","149.112.112.112"],ipv6:["2620:fe::fe","2620:fe::9"]},
+    romania:{label:"Romania",ipv4:["1.1.1.1","1.0.0.1"],ipv6:["2606:4700:4700::1111","2606:4700:4700::1001"]},
+    usa:{label:"United States",ipv4:["8.8.8.8","8.8.4.4"],ipv6:["2001:4860:4860::8888","2001:4860:4860::8844"]},
+    canada:{label:"Canada",ipv4:["9.9.9.9","149.112.112.112"],ipv6:["2620:fe::fe","2620:fe::9"]},
+    japan:{label:"Japan",ipv4:["1.1.1.1","1.0.0.1"],ipv6:["2606:4700:4700::1111","2606:4700:4700::1001"]},
+    singapore:{label:"Singapore",ipv4:["8.8.8.8","8.8.4.4"],ipv6:["2001:4860:4860::8888","2001:4860:4860::8844"]}
+  };
+  return {
+    getProfile(k){ return P[k] || P.germany; },
+    buildDnsLine(k){ const p = P[k]||P.germany; return [...p.ipv4,...p.ipv6].join(", "); },
+    all(){ return P; }
+  };
+})();
+
+/* ============================================================
+   MTU_ENGINE
+   ============================================================ */
+const MTU_ENGINE = {
+  selectProfile(){ return { name:"balanced", mtu:1420 }; }
+};
+
+/* ============================================================
+   IP_ENGINE
+   ============================================================ */
+const IP_ENGINE = (()=>{
+  const SUBNET = "10.66.66";
+  const used = new Set();
+  function allocate(){
+    let ip, n=0;
+    do{
+      const arr = new Uint8Array(1); crypto.getRandomValues(arr);
+      ip = `${SUBNET}.${2 + (arr[0] % 250)}`;
+      n++;
+      if(n>500) throw new Error("IP allocation exhausted");
+    } while(used.has(ip));
+    used.add(ip);
+    return ip + "/24";
+  }
+  return { allocate };
+})();
+
+/* ============================================================
+   KEY_ENGINE — real WireGuard keypair via backend X25519
+   ============================================================ */
+const KEY_ENGINE = (()=>{
+  const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  function bytesToBase64(bytes){
+    let out = "";
+    for(let i=0;i<bytes.length;i+=3){
+      const b0 = bytes[i];
+      const b1 = i+1 < bytes.length ? bytes[i+1] : 0;
+      const b2 = i+2 < bytes.length ? bytes[i+2] : 0;
+      out += B64[b0>>2];
+      out += B64[((b0&3)<<4) | (b1>>4)];
+      out += i+1 < bytes.length ? B64[((b1&15)<<2) | (b2>>6)] : "=";
+      out += i+2 < bytes.length ? B64[b2&63] : "=";
+    }
+    return out;
+  }
+  function clamp(arr){
+    arr[0]  &= 248;
+    arr[31] &= 127;
+    arr[31] |= 64;
+    return arr;
+  }
+  function generatePrivateKey(){
+    if(!window.crypto || !window.crypto.getRandomValues){
+      throw new Error("CRYPTO_UNAVAILABLE");
+    }
+    const arr = new Uint8Array(32);
+    crypto.getRandomValues(arr);
+    clamp(arr);
+    return bytesToBase64(arr);
+  }
+  async function derivePublicKey(privateKeyB64){
+    const res = await fetch(API_BASE_URL + "/wg/derive-pubkey", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ privateKey: privateKeyB64 })
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error || "PUBKEY_DERIVATION_FAILED");
+    }
+    const data = await res.json();
+    if(!data.publicKey) throw new Error("PUBKEY_MISSING");
+    return data.publicKey;
+  }
+  async function generateKeypair(){
+    const privateKey = generatePrivateKey();
+    const publicKey = await derivePublicKey(privateKey);
+    return { privateKey, publicKey };
+  }
+  return { generateKeypair };
+})();
+
+/* ============================================================
+   ENDPOINT_ENGINE
+   ============================================================ */
+const ENDPOINT_ENGINE = (()=>{
+  const INITIAL = [
+    { host:"uk3.vpnjantit.com", port:1024, country:"uk", region:"europe" },
+    { host:"nl2.vpnjantit.com", port:51820, country:"netherlands", region:"europe" },
+    { host:"185.231.58.10",     port:51820, country:"netherlands", region:"europe" }
+  ];
+  let registry = [];
+  function slug(s){ return (s||"").toLowerCase(); }
+  function add(ep){
+    if(!ep || typeof ep.host!=="string" || !ep.host.length) return false;
+    if(typeof ep.port!=="number" || ep.port<1 || ep.port>65535) return false;
+    const key = ep.host+":"+ep.port;
+    if(registry.some(e=>e.key===key)) return false;
+    registry.push({
+      key, host:ep.host, port:ep.port,
+      country: slug(ep.country||"unknown"),
+      region: slug(ep.region||"unknown"),
+      publicKey: ep.publicKey || null,
+      source: ep.source || "manual",
+      status: "unverified", latencyMs: null, packetLoss: null,
+      activeConfigs: 0, score: 0, lastCheck: null
+    });
+    return true;
+  }
+  function seed(){ INITIAL.forEach(add); }
+  async function checkHealth(ep){
+    try{
+      const res = await fetch(API_BASE_URL + "/wg/health", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ host: ep.host, port: ep.port })
+      });
+      if(res.ok){
+        const d = await res.json();
+        ep.status = d.status || "unverified";
+        ep.latencyMs = typeof d.latencyMs==="number" ? d.latencyMs : null;
+        ep.packetLoss = typeof d.packetLoss==="number" ? d.packetLoss : null;
+        ep.lastCheck = Date.now();
+        return;
+      }
+    }catch(e){}
+    ep.status = "unverified";
+    ep.lastCheck = Date.now();
+  }
+  async function checkAll(){ await Promise.all(registry.map(checkHealth)); registry.forEach(score); }
+  function score(ep){
+    let s = 0;
+    if(ep.status==="online") s += 50;
+    else if(ep.status==="degraded") s += 20;
+    else if(ep.status==="offline") s -= 100;
+    if(typeof ep.latencyMs==="number") s += Math.max(0, 30 - (ep.latencyMs/10));
+    if(typeof ep.packetLoss==="number") s += Math.max(0, 20 - (ep.packetLoss*2));
+    s -= (ep.activeConfigs||0) * 1.5;
+    ep.score = Math.round(s*10)/10;
+  }
+  function regionOf(c){
+    const EU = ["germany","turkey","netherlands","uk","france","finland","poland","sweden","norway","romania"];
+    const NA = ["usa","canada"];
+    if(EU.includes(c)) return "europe";
+    if(NA.includes(c)) return "north-america";
+    if(c==="japan"||c==="singapore") return "asia";
+    return "global";
+  }
+  function selectForLocation(locKey){
+    const loc = slug(locKey);
+    const tiers = [
+      registry.filter(e=>e.country===loc),
+      registry.filter(e=>e.region===regionOf(loc)),
+      registry.slice()
+    ];
+    for(const tier of tiers){
+      const healthy = tier.filter(e=>e.status==="online" || e.status==="degraded");
+      if(healthy.length){
+        healthy.forEach(score);
+        healthy.sort((a,b)=> b.score - a.score);
+        const top = healthy[0];
+        const pool = healthy.filter(e=> e.score >= top.score - 8);
+        pool.sort((a,b)=> a.activeConfigs - b.activeConfigs);
+        return pool[0];
+      }
+    }
+    return registry[0] || null;
+  }
+  function incrementLoad(ep){ if(ep) ep.activeConfigs = (ep.activeConfigs||0)+1; }
+  return { add, seed, all:()=>registry.slice(), checkAll, selectForLocation, incrementLoad };
+})();
+
+/* ============================================================
+   ENDPOINT_DISCOVERY
+   ============================================================ */
+const ENDPOINT_DISCOVERY = {
+  loadPublicSeed(){
+    const SEED = [
+      { host:"uk3.vpnjantit.com", port:1024, country:"uk", region:"europe", source:"public-seed" },
+      { host:"nl2.vpnjantit.com", port:51820, country:"netherlands", region:"europe", source:"public-seed" },
+      { host:"185.231.58.10", port:51820, country:"netherlands", region:"europe", source:"public-seed" }
+    ];
+    let n = 0;
+    SEED.forEach(ep=>{ if(ENDPOINT_ENGINE.add(ep)) n++; });
+    return n;
+  },
+  parseImportText(text){
+    let n = 0;
+    String(text||"").split(/\r?\n/).forEach(line=>{
+      const t = line.trim();
+      if(!t || t.startsWith("#")) return;
+      const parts = t.split(",").map(s=>s.trim());
+      const hp = parts[0].split(":");
+      if(hp.length!==2) return;
+      const port = parseInt(hp[1],10);
+      if(!port) return;
+      if(ENDPOINT_ENGINE.add({
+        host: hp[0], port,
+        country: parts[1] || "unknown",
+        region: parts[2] || "",
+        publicKey: parts[3] || null,
+        source: "import"
+      })) n++;
+    });
+    return n;
+  }
+};
+
+/* ============================================================
+   EXPIRATION_ENGINE
+   ============================================================ */
+const EXPIRATION_ENGINE = {
+  compute(days){ const now = Date.now(); return { created: now, expires: now + days*86400000, days }; },
+  formatDate(ts){
+    const d = new Date(ts);
+    return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}) +
+      " " + d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+  }
+};
+
+/* ============================================================
+   DOWNLOAD_ENGINE
+   ============================================================ */
+const DOWNLOAD_ENGINE = {
+  download(filename, content){
+    const blob = new Blob([content], { type:"text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=> URL.revokeObjectURL(url), 1000);
+  }
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = (s, ctx=document)=> ctx.querySelector(s);
+const $$ = (s, ctx=document)=> [...ctx.querySelectorAll(s)];
+function toast(msg, isErr){
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.toggle("err", !!isErr);
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(()=> el.classList.remove("show"), 3200);
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+/* ============================================================
+   LOCATIONS
+   ============================================================ */
+const LOCATIONS = [
+  { key:"germany",     label:"Germany",        flag:"🇩🇪" },
+  { key:"turkey",      label:"Turkey",         flag:"🇹🇷" },
+  { key:"netherlands", label:"Netherlands",    flag:"🇳🇱" },
+  { key:"uk",          label:"United Kingdom", flag:"🇬🇧" },
+  { key:"france",      label:"France",         flag:"🇫🇷" },
+  { key:"finland",     label:"Finland",        flag:"🇫🇮" },
+  { key:"poland",      label:"Poland",         flag:"🇵🇱" },
+  { key:"sweden",      label:"Sweden",         flag:"🇸🇪" },
+  { key:"norway",      label:"Norway",         flag:"🇳🇴" },
+  { key:"romania",     label:"Romania",        flag:"🇷🇴" },
+  { key:"usa",         label:"United States",  flag:"🇺🇸" },
+  { key:"canada",      label:"Canada",         flag:"🇨🇦" },
+  { key:"japan",       label:"Japan",          flag:"🇯🇵" },
+  { key:"singapore",   label:"Singapore",      flag:"🇸🇬" }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STATE = {
+  dataGB: 50, dataUnlimited: false, days: 30, location: "germany",
+  currentConfig: null, generating: false
+};
+
+/* ============================================================
+   CHIP GROUP
+   ============================================================ */
+function initChipGroup(id, onSelect){
+  const c = $("#"+id);
+  if(!c) return;
+  c.addEventListener("click", e=>{
+    const chip = e.target.closest(".chip");
+    if(!chip) return;
+    $$(".chip", c).forEach(x=> x.setAttribute("aria-pressed","false"));
+    chip.setAttribute("aria-pressed","true");
+    onSelect(chip.dataset);
+  });
+}
+
+/* ============================================================
+   CONFIGURATION_ENGINE
+   ============================================================ */
+const CONFIGURATION_ENGINE = (()=>{
+  const STEPS = [
+    "Generating WireGuard keypair (X25519)",
+    "Allocating tunnel IP",
+    "Resolving location DNS profile",
+    "Selecting MTU profile",
+    "Selecting optimal endpoint",
+    "Building gaming route table",
+    "Generating configuration"
+  ];
+  function renderSteps(){
+    $("#loaderSteps").innerHTML = STEPS.map((s,i)=>
+      `<li data-step="${i}"><span class="bullet">${i+1}</span><span>${escapeHtml(s)}</span></li>`
+    ).join("");
+  }
+  function mark(i, state){
+    const li = $(`#loaderSteps li[data-step="${i}"]`);
+    if(!li) return;
+    li.classList.remove("done","active");
+    if(state) li.classList.add(state);
+    if(state==="done") li.querySelector(".bullet").textContent = "✓";
+  }
+  async function run(dataGB, dataUnlimited, days, locationKey){
+    if(STATE.generating) return;
+    STATE.generating = true;
+    $("#createBtn").disabled = true;
+    $("#loader").classList.add("active");
+    $("#resultContent").style.display = "none";
+    $("#resultEmpty").style.display = "block";
+    $("#configBox").classList.remove("active");
+    renderSteps();
+    const wait = ms => new Promise(r=> setTimeout(r, ms));
+    try{
+      mark(0,"active"); await wait(150);
+      const keypair = await KEY_ENGINE.generateKeypair();
+      mark(0,"done");
+
+      mark(1,"active"); await wait(120);
+      const tunnelIp = IP_ENGINE.allocate();
+      mark(1,"done");
+
+      mark(2,"active"); await wait(100);
+      const dnsLine = DNS_ENGINE.buildDnsLine(locationKey);
+      mark(2,"done");
+
+      mark(3,"active"); await wait(80);
+      const mtuProfile = MTU_ENGINE.selectProfile();
+      mark(3,"done");
+
+      mark(4,"active"); await wait(200);
+      await ENDPOINT_ENGINE.checkAll();
+      const endpoint = ENDPOINT_ENGINE.selectForLocation(locationKey);
+      if(!endpoint) throw new Error("NO_ENDPOINT");
+      ENDPOINT_ENGINE.incrementLoad(endpoint);
+      mark(4,"done");
+
+      mark(5,"active"); await wait(120);
+      const allowedIPs = ROUTE_ENGINE.buildAllowedIPs();
+      mark(5,"done");
+
+      mark(6,"active"); await wait(150);
+      const expiration = EXPIRATION_ENGINE.compute(days);
+      const lines = [];
+      lines.push("[Interface]");
+      lines.push(`PrivateKey = ${keypair.privateKey}`);
+      lines.push(`Address = ${tunnelIp}`);
+      lines.push(`DNS = ${dnsLine}`);
+      lines.push(`MTU = ${mtuProfile.mtu}`);
+      lines.push("");
+      lines.push("# Gaming-only routing. Full-tunnel routes are intentionally omitted.");
+      lines.push("# Normal internet traffic is NOT routed through this tunnel.");
+      lines.push("[Peer]");
+      lines.push(`PublicKey = ${endpoint.publicKey || keypair.publicKey}`);
+      lines.push(`Endpoint = ${endpoint.host}:${endpoint.port}`);
+      if(allowedIPs.length){
+        lines.push(`AllowedIPs = ${allowedIPs.join(", ")}`);
+      } else {
+        lines.push(`# AllowedIPs = (no gaming routes configured yet — admin must populate ROUTE_ENGINE.GAMING_ROUTES)`);
+      }
+      lines.push(`PersistentKeepalive = 25`);
+      lines.push("");
+      const confText = lines.join("\n");
+      mark(6,"done");
+
+      STATE.currentConfig = {
+        confText, keypair, tunnelIp, dnsLine, mtuProfile, endpoint,
+        allowedIPs, expiration, dataGB, dataUnlimited, locationKey,
+        id: "WG-" + Math.random().toString(36).slice(2,8).toUpperCase()
+      };
+      await wait(250);
+      renderResult(STATE.currentConfig);
+      $("#loader").classList.remove("active");
+    }catch(err){
+      $("#loader").classList.remove("active");
+      let msg = "Configuration generation failed.";
+      if(err.message==="NO_ENDPOINT") msg = "No healthy endpoint available for this region.";
+      else if(err.message==="CRYPTO_UNAVAILABLE") msg = "Browser does not support required cryptographic functionality.";
+      else if(err.message==="PUBKEY_DERIVATION_FAILED") msg = "Backend could not derive public key. Is server.py running?";
+      else if(err.message==="PUBKEY_MISSING") msg = "Backend returned no public key.";
+      console.error("[CONFIGURATION_ENGINE]", err.message);
+      toast(msg, true);
+    }finally{
+      STATE.generating = false;
+      $("#createBtn").disabled = false;
+    }
+  }
+  return { run };
+})();
+
+/* ============================================================
+   RESULT RENDER
+   ============================================================ */
+function renderResult(cfg){
+  $("#resultEmpty").style.display = "none";
+  $("#resultContent").style.display = "block";
+  $("#resultHint").textContent = "Active";
+  $("#cfgId").textContent = cfg.id;
+  const loc = LOCATIONS.find(l=>l.key===cfg.locationKey) || LOCATIONS[0];
+  const dataLabel = cfg.dataUnlimited ? "UNLIMITED" : cfg.dataGB + " GB";
+  const rows = [
+    ["Location", `${loc.flag} ${loc.label}`],
+    ["Data Limit", dataLabel],
+    ["Duration", cfg.expiration.days + " Days"],
+    ["Expires", EXPIRATION_ENGINE.formatDate(cfg.expiration.expires)],
+    ["Tunnel IP", cfg.tunnelIp, true],
+    ["Endpoint", `${cfg.endpoint.host}:${cfg.endpoint.port}`, true],
+    ["DNS", cfg.dnsLine, true],
+    ["MTU", String(cfg.mtuProfile.mtu)],
+    ["AllowedIPs", cfg.allowedIPs.length ? (cfg.allowedIPs.length + " gaming route(s)") : "Not configured"]
+  ];
+  $("#kvGrid").innerHTML = rows.map(([k,v,mono])=>
+    `<div class="kv"><span class="k">${escapeHtml(k)}</span><span class="v ${mono?'mono':''}">${escapeHtml(v)}</span></div>`
+  ).join("");
+  $("#dataBar").style.width = "0%";
+  $("#timeBar").style.width = "0%";
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      $("#dataBar").style.width = "100%";
+      $("#timeBar").style.width = "100%";
+    }, 60);
+  });
+  $("#dataBarTxt").textContent = cfg.dataUnlimited ? "Unlimited" : `0.0 GB / ${cfg.dataGB} GB`;
+  $("#timeBarTxt").textContent = `${cfg.expiration.days} Days Remaining`;
+  $("#configPre").textContent = cfg.confText;
+  $("#cfgLines").textContent = cfg.confText.split("\n").length + " lines";
+  $("#configBox").classList.remove("active");
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function ensureConfig(){
+  if(!STATE.currentConfig){ toast("Generate a configuration first.", true); return null; }
+  return STATE.currentConfig;
+}
+function handleShowConfig(){
+  const cfg = ensureConfig(); if(!cfg) return;
+  $("#configBox").classList.toggle("active");
+}
+async function handleCopy(){
+  const cfg = ensureConfig(); if(!cfg) return;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(cfg.confText);
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = cfg.confText;
+      ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); document.body.removeChild(ta);
+    }
+    toast("Copied!");
+  }catch(e){ toast("Clipboard unavailable.", true); }
+}
+function handleDownload(){
+  const cfg = ensureConfig(); if(!cfg) return;
+  DOWNLOAD_ENGINE.download("wireguard-gaming.conf", cfg.confText);
+  toast("Downloaded wireguard-gaming.conf");
+}
+
+/* ============================================================
+   DNS MODE
+   ============================================================ */
+function handleGenerateDns(){
+  const locKey = $("#dnsLocationSelect").value;
+  const profile = DNS_ENGINE.getProfile(locKey);
+  const loc = LOCATIONS.find(l=>l.key===locKey) || LOCATIONS[0];
+  const dataChip = $("#dnsDataChips .chip[aria-pressed='true']");
+  const durChip = $("#dnsDurationChips .chip[aria-pressed='true']");
+  const dataVal = dataChip ? dataChip.dataset.value : "50";
+  const durVal = durChip ? durChip.dataset.days : "30";
+  const box = $("#dnsResult");
+  box.innerHTML = `
+    <div class="dns-row"><span class="k">Location</span><span class="v" style="color:var(--text)">${loc.flag} ${escapeHtml(loc.label)}</span></div>
+    <div class="dns-row"><span class="k">Data</span><span class="v" style="color:var(--text)">${dataVal==="0"?"Unlimited":dataVal+" GB"}</span></div>
+    <div class="dns-row"><span class="k">Duration</span><span class="v" style="color:var(--text)">${durVal} Days</span></div>
+    <div class="dns-row"><span class="k">DNS IPv4</span><span class="v">${profile.ipv4.join(", ")}</span></div>
+    <div class="dns-row"><span class="k">DNS IPv6</span><span class="v">${profile.ipv6.join(", ")}</span></div>
+    <div class="dns-row"><span class="k">Status</span><span class="v" style="color:var(--accent-3)">ACTIVE</span></div>`;
+  box.classList.add("active");
+  toast("Gaming DNS profile generated");
+}
+
+/* ============================================================
+   ENDPOINT UI
+   ============================================================ */
+function renderEndpointList(){
+  const list = ENDPOINT_ENGINE.all();
+  $("#epCount").textContent = list.length + " node" + (list.length===1?"":"s");
+  const el = $("#epList");
+  if(!list.length){
+    el.innerHTML = `<div class="result-empty" style="padding:22px">No endpoints in pool.</div>`;
+    return;
+  }
+  el.innerHTML = list.map(ep=>{
+    const lat = typeof ep.latencyMs==="number" ? ep.latencyMs+"ms" : "—";
+    return `<div class="ep-item">
+      <span class="ep-dot ${ep.status}"></span>
+      <div class="ep-info">
+        <div class="ep-host">${escapeHtml(ep.host)}:${ep.port}</div>
+        <div class="ep-meta">${escapeHtml(ep.country)} · ${escapeHtml(ep.status)} · ${lat} · load ${ep.activeConfigs||0}</div>
+      </div>
+      <span class="ep-score">${ep.score||0}</span>
+    </div>`;
+  }).join("");
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function populateLocationSelects(){
+  const opts = LOCATIONS.map(l=>`<option value="${l.key}">${l.flag}  ${escapeHtml(l.label)}</option>`).join("");
+  $("#locationSelect").innerHTML = opts;
+  $("#dnsLocationSelect").innerHTML = opts;
+  const prefs = STORAGE_ENGINE.getPrefs();
+  if(prefs.location) $("#locationSelect").value = prefs.location;
+  if(prefs.dnsLocation) $("#dnsLocationSelect").value = prefs.dnsLocation;
+}
+
+function updateLocationMeta(){
+  const loc = STATE.location;
+  const dns = DNS_ENGINE.getProfile(loc);
+  $("#tagDns").textContent = dns.label;
+  const eps = ENDPOINT_ENGINE.all().filter(e=> e.country===loc || ENDPOINT_ENGINE.all().length);
+  $("#tagEps").textContent = eps.length || "0";
+}
+
+function savePrefs(){
+  STORAGE_ENGINE.setPrefs({
+    location: STATE.location,
+    dnsLocation: $("#dnsLocationSelect").value
+  });
+}
+
+function init(){
+  THEME_ENGINE.init();
+  ENDPOINT_ENGINE.seed();
+  populateLocationSelects();
+
+  $("#themeToggle").addEventListener("click", ()=> THEME_ENGINE.toggle());
+
+  initChipGroup("dataChips", d=>{
+    STATE.dataGB = parseInt(d.value,10);
+    STATE.dataUnlimited = d.value==="0";
+    $("#customData").value = "";
+    savePrefs();
+  });
+  initChipGroup("durationChips", d=>{
+    STATE.days = parseInt(d.days,10);
+    $("#customDuration").value = "";
+    savePrefs();
+  });
+  initChipGroup("dnsDataChips", ()=>{});
+  initChipGroup("dnsDurationChips", ()=>{});
+
+  $("#customData").addEventListener("input", e=>{
+    const v = parseInt(e.target.value,10);
+    if(v>0){
+      STATE.dataGB = v; STATE.dataUnlimited = false;
+      $$("#dataChips .chip").forEach(c=> c.setAttribute("aria-pressed","false"));
+    }
+  });
+  $("#customDuration").addEventListener("input", e=>{
+    const v = parseInt(e.target.value,10);
+    if(v>0){
+      STATE.days = v;
+      $$("#durationChips .chip").forEach(c=> c.setAttribute("aria-pressed","false"));
+    }
+  });
+
+  $("#locationSelect").addEventListener("change", e=>{
+    STATE.location = e.target.value;
+    updateLocationMeta();
+    savePrefs();
+  });
+  $("#dnsLocationSelect").addEventListener("change", savePrefs);
+
+  $("#createBtn").addEventListener("click", ()=>{
+    const loc = $("#locationSelect").value;
+    STATE.location = loc;
+    CONFIGURATION_ENGINE.run(STATE.dataGB, STATE.dataUnlimited, STATE.days, loc);
+  });
+
+  $("#dnsBtn").addEventListener("click", handleGenerateDns);
+  $("#showConfigBtn").addEventListener("click", handleShowConfig);
+  $("#copyBtn").addEventListener("click", handleCopy);
+  $("#downloadBtn").addEventListener("click", handleDownload);
+
+  $("#loadSampleBtn").addEventListener("click", ()=>{
+    const n = ENDPOINT_DISCOVERY.loadPublicSeed();
+    renderEndpointList();
+    updateLocationMeta();
+    toast(n>0 ? `Loaded ${n} endpoint(s)` : "Endpoints already loaded");
+  });
+  $("#importBtn").addEventListener("click", ()=>{
+    const text = prompt("Paste endpoint list (host:port[,country][,region][,publicKey] — one per line):");
+    if(!text) return;
+    const n = ENDPOINT_DISCOVERY.parseImportText(text);
+    renderEndpointList();
+    updateLocationMeta();
+    toast(n>0 ? `Imported ${n} endpoint(s)` : "No valid endpoints found");
+  });
+  $("#healthBtn").addEventListener("click", async ()=>{
+    $("#engineStatus").textContent = "Checking…";
+    await ENDPOINT_ENGINE.checkAll();
+    renderEndpointList();
+    updateLocationMeta();
+    $("#engineStatus").textContent = "Engine Ready";
+    toast("Health check complete");
+  });
+
+  ENDPOINT_DISCOVERY.loadPublicSeed();
+  renderEndpointList();
+  updateLocationMeta();
+
+  const prefs = STORAGE_ENGINE.getPrefs();
+  if(prefs.location){
+    STATE.location = prefs.location;
+    $("#locationSelect").value = prefs.location;
+    updateLocationMeta();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
